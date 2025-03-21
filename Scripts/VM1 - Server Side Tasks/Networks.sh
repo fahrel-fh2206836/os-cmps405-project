@@ -9,7 +9,7 @@ a=0
 while [ "$a" -le 3 ]
 do
 	#Every timestamps
-	timeStamp=$(date "+%Y %M %d - %H:%M:%S ")
+	timeStamp=$(date "+%Y-%M-%d_%H:%M:%S")
 
 	outputFile="PingDirectory/TimeStamp_$timeStamp.txt"
 
@@ -17,7 +17,7 @@ do
 	touch "$outputFile"
 
 	#Modify permissions to read and write for owner only
-	chmod 600 outputFile
+	chmod 600 "$outputFile"
 
 	#Replace google.com with target VM IP address
 	ping google.com -s 500 -c 10 >> "$outputFile"
