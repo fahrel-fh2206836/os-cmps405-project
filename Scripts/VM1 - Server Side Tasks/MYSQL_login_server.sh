@@ -28,6 +28,36 @@ EOF
 #Verify User Creation
 mysql -u root -p 'root_pass_123' -e "SELECT User FROM mysql.user;"
 
+## dev_lead1 Authentication and Verification | Database and Table Exploration
+sudo mysql -u dev_lead1 -p'dev123' -h $SERVER_IP <<EOF
+SELECT USER(), CURRENT_USER();
+SHOW SESSION STATUS;
+SHOW DATABASES;
+
+-- Loop through each accessible database and show tables
+SHOW TABLES IN development_db;
+SHOW TABLES IN operations_db;
+EOF
+
+## dev_lead1 Authentication and Verification | Database and Table Exploration
+sudo mysql -u ops_lead1 -p'ops123' -h $SERVER_IP <<EOF
+SELECT USER(), CURRENT_USER();
+SHOW SESSION STATUS;
+SHOW DATABASES;
+
+-- Loop through each accessible database and show tables
+SHOW TABLES IN development_db;
+SHOW TABLES IN operations_db;
+EOF
+
+
+## dev_lead1 Database and Table Exploration
+sudo mysql -u dev_lead1 -p 'dev123' -h '$SERVER_IP' -e "SHOW DATABASES;"
+
+#Show databases of each user
+sudo mysql -u dev_lead1 -p 'dev123' -h '$SERVER_IP' -e "SHOW DATABASES;"
+sudo mysql -u ops_lead1 -p 'ops123' -h '$SERVER_IP' -e "SHOW DATABASES;"
+
 #Show databases of each user
 sudo mysql -u dev_lead1 -p 'dev123' -h '$SERVER_IP' -e "SHOW DATABASES;"
 sudo mysql -u ops_lead1 -p 'ops123' -h '$SERVER_IP' -e "SHOW DATABASES;"
