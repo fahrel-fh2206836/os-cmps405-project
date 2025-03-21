@@ -10,13 +10,13 @@ REMOTE_PATH="$VM1_USER@$VM1_IP:$DEST_DIR"
 
 # 1. Create Report
 {
-    echo "===== Resource Report ($TIMESTAMP) ====="
+    echo "======= Resource Report ($TIMESTAMP) ======="
     echo
-    echo "--- Process Tree with Processes ID---"
-    pstree -p
+    echo "--Process Tree--"
+    pstree
 
     echo
-    echo "--- Zombie Processes ---"
+    echo "--Zombie Processes--"
     lines=$(ps aux | awk '$8=="Z"' | wc -l) 
     if [[ "$lines" -eq 0 ]]
     then
@@ -26,11 +26,11 @@ REMOTE_PATH="$VM1_USER@$VM1_IP:$DEST_DIR"
     fi
     
     echo
-    echo "--- CPU and Memory Usage---"
+    echo "--CPU and Memory Usage--"
     top -b -n 1 | grep -E "Tasks|Cpu|Mem|Swap"
 
     echo
-    echo "--- Top 5 Resource-Consuming Processes (%CPU AND %MEM) ---"
+    echo "--Top 5 Resource-Consuming Processes (%CPU AND %MEM)--"
     ps -eo pid,comm,%cpu,%mem | awk 'NR==1 {print $0, "TOTAL"; next} {total = $3 + $4; print $0, total}' | (head -n 1 && tail -n +2 | sort -k5 -nr | head -n 5)
 } > "$REPORT"
 
