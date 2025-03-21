@@ -16,3 +16,5 @@ do
     # Log the event
     echo "User: $(whoami) | Action: $event | File: $file" >> "$logFile"
 done
+
+# Make sure this is run with user that has access to logFile and directory, otherwise use sudo ./file_audit.sh to run
