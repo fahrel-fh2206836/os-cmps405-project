@@ -1,0 +1,5 @@
+# TASKS REMAINING
+- VM1 TASK 2
+- VM1 TASK 3.2
+- VM1 TASK 4
+- CONNECT BETWEEN VMS and edit scripts that requires SSH.
