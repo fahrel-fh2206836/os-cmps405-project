@@ -1,10 +1,10 @@
 #!/bin/bash
 
-REPORT="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
-#DEST_DIR="/var/operations/report"  # Must exist on VM1
-#VM1_USER="admin"                       # Change to actual user
-#VM1_IP="192.168.1.100"                 # Change to actual IP
-#REMOTE_PATH="$VM1_USER@$VM1_IP:$DEST_DIR"
+report="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
+#reportDir="/var/operations/report"  # Must exist on VM1
+#userVM1="admin"                       # Change to actual user
+#ipVM1="192.168.1.100"                 # Change to actual IP
+#remotePath="$userVM1@$ipVM1:$reportDir"
 
 # 1. Create Report
 {
@@ -30,13 +30,13 @@ REPORT="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
     echo
     echo "--Top 5 Resource-Consuming Processes (%CPU AND %MEM)--"
     ps -eo pid,comm,%cpu,%mem | awk 'NR==1 {print $0, "TOTAL"; next} {total = $3 + $4; print $0, total}' | (head -n 1 && tail -n +2 | sort -k5 -nr | head -n 5)
-} > "$REPORT"
+} > "$report"
 
 # 2. Securely copy the report to VM1
-#scp "$REPORT" "$REMOTE_PATH"
+#scp "$report" "$remotePath"
 
 # 3. Delete local report
-#rm "$REPORT"
+#rm "$report"
 
 ## Automate hourly using crontab
 ## crontab -e
