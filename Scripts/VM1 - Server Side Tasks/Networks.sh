@@ -3,11 +3,11 @@
 #Creating the directory if it doesnt exist
 mkdir -p PingDirectory
 
-a=0
 
-#should modify to an infinte loop when execution
-while [ "$a" -le 3 ]
-do
+ping_client() {
+
+	local client_name=$1
+
 	#Every timestamps
 	timeStamp=$(date "+%Y-%M-%d_%H:%M:%S")
 
@@ -20,10 +20,26 @@ do
 	chmod 600 "$outputFile"
 
 	#Replace google.com with target VM IP address
-	ping google.com -s 500 -c 10 >> "$outputFile"
+	ping "$client_name" -s 500 -c 10 >> "$outputFile"
 
-	a=$((a + 1))
+}
 
-	sleep 10
+while true
+do
+	#ClientVM1
+	ping_client "google.com"
+
+	#ClientVM2
+	ping_client "bing.com"
+
+	#Every 10 seconds interval
+	sleep 10 
 done
+
+
+#Note: This should run in a seperate dedicated terminal. To stop it, Press Ctrl + Z
+
+
+
+
 
