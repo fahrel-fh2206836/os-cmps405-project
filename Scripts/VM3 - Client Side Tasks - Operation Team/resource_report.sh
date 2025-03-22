@@ -1,10 +1,10 @@
 #!/bin/bash
 
 report="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
-#reportDir="/var/operations/report"  # Must exist on VM1
-#userVM1="admin"                       # Change to actual user
-#ipVM1="192.168.1.100"                 # Change to actual IP
-#remotePath="$userVM1@$ipVM1:$reportDir"
+reportDir="/var/operations/report"
+userVM1="admin"                       # Change to actual user
+ipVM1="192.168.1.100"                 # Change to actual IP
+remotePath="$userVM1@$ipVM1:$reportDir"
 
 # 1. Create Report
 {
@@ -33,10 +33,10 @@ report="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
 } > "$report"
 
 # 2. Securely copy the report to VM1
-#scp "$report" "$remotePath"
+scp "$report" "$remotePath"
 
 # 3. Delete local report
-#rm "$report"
+rm "$report"
 
 ## Automate hourly using crontab
 ## crontab -e
