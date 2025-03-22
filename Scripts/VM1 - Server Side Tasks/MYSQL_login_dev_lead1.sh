@@ -14,13 +14,10 @@ ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root_pas
 FLUSH PRIVILEGES;
 
 CREATE USER IF NOT EXISTS 'dev_lead1'@'%' IDENTIFIED BY 'dev123';
-CREATE USER IF NOT EXISTS 'ops_lead1'@'%' IDENTIFIED BY 'ops123';
 
 CREATE DATABASE IF NOT EXISTS development_db;
-CREATE DATABASE IF NOT EXISTS operations_db;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, CREATE VIEW, SHOW VIEW ON development_db TO 'dev_lead1'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE VIEW, SHOW VIEW ON operations_db TO 'ops_lead1'@'%';
 
 FLUSH PRIVILEGES;
 EOF
@@ -36,32 +33,20 @@ SHOW DATABASES;
 
 -- Loop through each accessible database and show tables
 SHOW TABLES IN development_db;
-SHOW TABLES IN operations_db;
-EOF
-
-## ops_lead1 Authentication and Verification | Database and Table Exploration
-sudo mysql -u ops_lead1 -p'ops123' -h $SERVER_IP <<EOF
-SELECT USER(), CURRENT_USER();
-SHOW SESSION STATUS;
-SHOW DATABASES;
-
--- Loop through each accessible database and show tables
-SHOW TABLES IN development_db;
-SHOW TABLES IN operations_db;
 EOF
 
 #Logging
-sudo sed -i '/\[mysqld\]/a general_log = 1\ngeneral_log_file = /var/log/mysql/general.log' "$MYSQL_CONFIG"
+sudo sed -i '/\[mysqld\]/a general_log = 1\ngeneral_log_file = /var/log/mysql/general.log' "/etc/mysql/my.cnf"
 sudo systemctl restart mysql;
 
 tail -f "/var/log/mysql/general.log" | while read line; do
 	#Logins
-    if [[ "$line" == *"Connect"* ]]; then
+    if [[ "$line" == *"Connect"* && "$line" == *"dev_lead1"* ]]; then
         echo "$(date) - LOGIN: $line" >> "/var/log/mysql/mysql_monitor.log"
     fi
 
    	#Queries
-    if [[ "$line" == *"Query:"* ]]; then
+    if [[ "$line" == *"Query:"* && "$line" == *"dev_lead1"* ]]]; then
         echo "$(date) - QUERY: $line" >> "/var/log/mysql/mysql_monitor.log"
     fi
 done
