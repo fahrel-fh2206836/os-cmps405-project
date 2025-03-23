@@ -1,9 +1,9 @@
 #!/bin/bash
 
 report="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
-reportDir="/var/operations/report"
-userVM1="admin"                       # Change to actual user
-ipVM1="192.168.1.100"                 # Change to actual IP
+reportDir="/var/operations/reports"
+userVM1="server"                      
+ipVM1="192.168.67.131"                 
 remotePath="$userVM1@$ipVM1:$reportDir"
 
 # 1. Create Report
