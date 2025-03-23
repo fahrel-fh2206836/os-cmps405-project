@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt install inotify-tools
+#sudo apt install inotify-tools
 
 directory="/projects/development"
 logFile="/var/log/file_changes.log"
