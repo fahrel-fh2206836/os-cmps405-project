@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Variables
-VM1_IP="192.168.151.123"  
+VM1_IP="192.168.151.123"  # Place the current IP of VM 1
 VM1_USER="server" 
-LOG_FILE="/home/muhtasim/invalid_attempts.log" 
-BLOCKED_IPS="/home/muhtasim/blocked_ips.txt"
+LOG_FILE="/home/vm2dev/invalid_attempts.log" # The files should be under the current user profile of VM2
+BLOCKED_IPS="/home/vm2dev/blocked_ips.txt"
 VM1_PASSWORD="123" 
 
 

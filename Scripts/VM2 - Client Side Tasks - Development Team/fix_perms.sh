@@ -1,6 +1,8 @@
-find /home/muhtasim/testDirectory -type f -perm 777 > files_list.txt;	
+find /home/vm2dev -type f -perm 777 > files_list.txt;	
 
-#Change the Directory to root when executing in VM2
+# Change the Directory to current user profile ~ when executing in VM2
+
+# Create a directory with file to simulate this
 
 while read file; do
 
