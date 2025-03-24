@@ -36,32 +36,11 @@
 # Restart MySQL to apply logging configuration
 # sudo systemctl restart mysql;
 
-##Creating systemd service for automation
-# sudo nano /etc/systemd/system/mysql_log_dev_lead1.service
-# [Unit]
-# Description=MySQL Log Monitoring Service
-# After=network.target
-
-# [Service]
-# ExecStart=/bin/bash /path/to/your/script/MySQL_login_user_name.sh
-# Restart=always
-# User=root
-
-# [Install]
-# WantedBy=multi-user.target
-# 
-
-##Reload Systemd for new service
-# sudo systemctl daemon-reload;
-
-#Enable and Start Service on Boot;
-# sudo systemctl enable mysql_log.service;
-# sudo systemctl start mysql_log.service;
-
 ##Obtain IP address of Server
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
 ##Creation of Users and Databases
+echo "MYSQL - ROOT"
 ##Assigning Privileges
 sudo mysql -u root -p<<EOF
 
@@ -74,9 +53,11 @@ GRANT ALL PRIVILEGES ON development_db.* TO 'dev_lead1'@'%';
 FLUSH PRIVILEGES;
 EOF
 
+echo "MYSQL - ROOT"
 #Verify User Creation
 mysql -u root -p -e "SELECT User FROM mysql.user;"
 
+echo "MYSQL - dev_lead1"
 ## dev_lead1 Authentication and Verification | Database and Table Exploration
 sudo mysql -u dev_lead1 -p -h $SERVER_IP <<EOF
 SELECT USER(), CURRENT_USER();
