@@ -27,3 +27,25 @@ for service in mysql ssh; do
         echo "$service is running." >> "$LOG_FILE"
     fi
 done
+
+##For the script to run every hour
+#sudo crontab -e
+#0 * * * * /path/to/system_monitor.sh
+
+##Create service for script to run on startup
+#sudo nano /etc/systemd/system/system_monitor.service
+#[Unit]
+#Description=System Monitoring Script
+#After=network.target
+
+#[Service]
+#ExecStart=/path/to/system_monitor.sh
+#Restart=always
+#User=root
+
+#[Install]
+#WantedBy=multi-user.target
+
+#sudo systemctl daemon-reload
+#sudo systemctl enable system_monitor.service
+#sudo systemctl start system_monitor.service
