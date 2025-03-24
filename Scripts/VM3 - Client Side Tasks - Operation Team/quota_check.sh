@@ -17,13 +17,23 @@ HARD_dev=$((6 * 1024 * 1024))
 SOFT_ops=$((3 * 1024 * 1024))   
 HARD_ops=$((4 * 1024 * 1024))
 
+# Check /shared Disk Usage
+ssh "$devVM1@$ipVM1" bash <<'EOF'
+echo "/Shared Disk usage:"
+du -sh /shared
+exit
+EOF
+
+
 # Fetch remote quota usage
 ssh "$devVM1@$ipVM1" bash <<'EOF' > /tmp/remote_quotas.txt
 quota -u dev_lead1 | awk 'NR==3 {print "dev_lead1", $2}'
+exit
 EOF
 
 ssh "$opsVM1@$ipVM1" bash <<'EOF' >> /tmp/remote_quotas.txt
 quota -u ops_lead1 | awk 'NR==3 {print "ops_lead1", $2}'
+exit
 EOF
 
 #quota -u dev_lead1 | awk '/^\/.*shared/ {print "dev_lead1", $2}'
@@ -56,4 +66,3 @@ rm -f /tmp/remote_quotas.txt
 
 echo "Monitored Quota at $(date)" | mail -s "Quota Monitoring" $email
 echo "✅ Quota monitoring completed."
-
