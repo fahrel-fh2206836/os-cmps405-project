@@ -1,70 +1,59 @@
 #!/bin/bash
 
-# ========== CONFIG ==========
+# Install the below and setup mail
+# sudo apt install msmtp msmtp-mta mailutils
 
-VM1_USER="admin"                   # Remote user
-VM1_IP="192.168.1.100"             # Remote VM1 IP
-EMAIL="admin@qu.edu.qa"           # Alert email
+# Email alert recipient
+email="jafm.projects@gmail.com"
 
-# Quotas in KB
-SOFT_dev=5000000   # 5GB
-HARD_dev=6000000   # 6GB
-SOFT_ops=3000000   # 3GB
-HARD_ops=4000000   # 4GB
+# Remote server (VM1)
+devVM1="dev_lead1"
+opsVM1="ops_lead1"
+ipVM1="192.168.10.128"
 
-# ========== ENABLE & SET QUOTAS ON VM1 ==========
+# Quota warning limits (in KB)
+SOFT_dev=$((5 * 1024 * 1024))   
+HARD_dev=$((6 * 1024 * 1024))   
+SOFT_ops=$((3 * 1024 * 1024))   
+HARD_ops=$((4 * 1024 * 1024))
 
-echo "🔧 Enabling quota system and applying limits on VM1 ($VM1_IP)..."
-
-ssh "$VM1_USER@$VM1_IP" <<EOF
-# Install quota tools if missing
-sudo apt-get install quota quotatool
-
-# Remount filesystem with quota options
-sudo mount -o remount,usrquota /
-
-# Initialize and enable quota
-sudo quotacheck -cum /
-sudo quotaon /
-
-# Set user quotas
-sudo setquota -u dev_lead1 $SOFT_dev $HARD_dev 0 0 /
-sudo setquota -u ops_lead1 $SOFT_ops $HARD_ops 0 0 /
+# Fetch remote quota usage
+ssh "$devVM1@$ipVM1" bash <<'EOF' > /tmp/remote_quotas.txt
+quota -u dev_lead1 | awk 'NR==3 {print "dev_lead1", $2}'
 EOF
 
-echo "✅ Quota system enabled and user limits applied."
-
-# ========== CHECK USAGE & SEND ALERTS ==========
-
-# Get usage remotely
-ssh "$VM1_USER@$VM1_IP" << 'EOF'
-quota -u dev_lead1 | awk 'NR==3 {print "dev_lead1", $2}'
+ssh "$opsVM1@$ipVM1" bash <<'EOF' >> /tmp/remote_quotas.txt
 quota -u ops_lead1 | awk 'NR==3 {print "ops_lead1", $2}'
 EOF
-> /tmp/remote_quotas.txt
 
-# Compare and alert
-while read user usage; do
+#quota -u dev_lead1 | awk '/^\/.*shared/ {print "dev_lead1", $2}'
+#quota -u ops_lead1 | awk '/^\/.*shared/ {print "ops_lead1", $2}'
+
+# Compare usage and send alerts
+while read -r user usage; do
     if [[ "$user" == "dev_lead1" ]]; then
-        if [[ "$usage" -gt "$SOFT_dev" ]]; then
+        if (( usage > SOFT_dev )); then
             echo "$user exceeded the 5GB soft limit. Usage: $usage KB" \
-            | mail -s "Quota Warning: $user" $EMAIL
+            | mail -s "Quota Warning: $user" "$email"
         fi
-        if [[ "$usage" -gt "$HARD_dev" ]]; then
+        if (( usage > HARD_dev )); then
             echo "$user exceeded the 6GB hard limit. Usage: $usage KB" \
-            | mail -s "Quota Critical: $user" $EMAIL
+            | mail -s "Quota Critical: $user" "$email"
         fi
     elif [[ "$user" == "ops_lead1" ]]; then
-        if [[ "$usage" -gt "$SOFT_ops" ]]; then
+        if (( usage > SOFT_ops )); then
             echo "$user exceeded the 3GB soft limit. Usage: $usage KB" \
-            | mail -s "Quota Warning: $user" $EMAIL
+            | mail -s "Quota Warning: $user" "$email"
         fi
-        if [[ "$usage" -gt "$HARD_ops" ]]; then
+        if (( usage > HARD_ops )); then
             echo "$user exceeded the 4GB hard limit. Usage: $usage KB" \
-            | mail -s "Quota Critical: $user" $EMAIL
+            | mail -s "Quota Critical: $user" "$email"
         fi
     fi
 done < /tmp/remote_quotas.txt
 
-rm /tmp/remote_quotas.txt
+rm -f /tmp/remote_quotas.txt
+
+echo "Monitored Quota at $(date)" | mail -s "Quota Monitoring" $email
+echo "✅ Quota monitoring completed."
 

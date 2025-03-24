@@ -1,28 +1,37 @@
 #!/bin/bash
 
 # Variables
-VM1_IP="vm1_ip"  # Replace with VM1's IP address
-VM1_USER="vm1_user"  # Replace with the username for VM1
-LOG_FILE="/path/to/invalid_attempts.log"  # Path to store invalid attempts log
-BLOCKED_IPS="/path/to/blocked_ips.txt"  # Path to store blocked IPs
+VM1_IP="192.168.151.123"  
+VM1_USER="server" 
+LOG_FILE="/home/muhtasim/invalid_attempts.log" 
+BLOCKED_IPS="/home/muhtasim/blocked_ips.txt"
+VM1_PASSWORD="123" 
+
+
+# Create the blocked_ips.txt file if it doesn't exist
+if [[ ! -f "$BLOCKED_IPS" ]]; then
+    touch "$BLOCKED_IPS"
+    echo "Created $BLOCKED_IPS"
+fi
+
 
 # Function to block IP using iptables on VM1
 block_ip() {
     local ip=$1
     echo "Blocking IP: $ip"
-    ssh $VM1_USER@$VM1_IP "sudo iptables -A INPUT -s $ip -j DROP" # Command for blocking the ip using iptables
+    ssh $VM1_USER@$VM1_IP "echo '$VM1_PASSWORD' | sudo -S iptables -A INPUT -s $ip -j DROP" # Command for blocking the ip using iptables
     echo "$ip" >> $BLOCKED_IPS
 }
 
 # Fetch SSH logs from VM1
 echo "Fetching SSH logs from VM1..."
-ssh $VM1_USER@$VM1_IP "sudo grep 'Failed password' /var/log/auth.log" > /tmp/ssh_failed_logs.txt
+ssh $VM1_USER@$VM1_IP "echo $VM1_PASSWORD | sudo -S grep 'Failed password' /var/log/auth.log" > /tmp/ssh_failed_logs.txt
 
 # Process logs
 echo "Processing logs..."
 declare -A ip_attempts  # Associative array to store IP attempts
 
-while read -r line; do
+while read -r line; do 
     ip=$(echo "$line" | grep -oP '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
     if [[ -n "$ip" ]]; then
         ((ip_attempts["$ip"]++))
@@ -33,7 +42,7 @@ done < /tmp/ssh_failed_logs.txt
 # Block IPs with more than 3 failed attempts
 for ip in "${!ip_attempts[@]}"; do
     if [[ ${ip_attempts["$ip"]} -ge 3 ]]; then
-        if ! grep -q "$ip" $BLOCKED_IPS; then  #To check if it is already blocked in iptables
+        if ! grep -q "$ip" $BLOCKED_IPS; then  #To check if it is already blocked
             block_ip "$ip"
         fi
     fi
