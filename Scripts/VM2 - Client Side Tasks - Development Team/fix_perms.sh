@@ -1,4 +1,4 @@
-find /home/vm2dev/testDirectory -type f -perm 777 > files_list.txt;	
+find /home/vm2dev -type f -perm 777 > files_list.txt;	
 
 # Change the Directory to current user profile ~ when executing in VM2
 
