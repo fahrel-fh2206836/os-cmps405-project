@@ -84,7 +84,9 @@ SHOW SESSION STATUS;
 SHOW DATABASES;
 
 -- Loop through each accessible database and show tables
-SHOW TABLES IN operations_db;
+SELECT TABLE_SCHEMA, TABLE_NAME 
+FROM information_schema.tables
+WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys');
 EOF
 
 #Logging
