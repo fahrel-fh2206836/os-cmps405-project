@@ -2,6 +2,10 @@
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_FILE="/var/operations/monitoring/metrics_$TIMESTAMP.log"
 
+# Create Log File and Grant Permissions
+sudo touch "$LOG_FILE"
+sudo chmod 666 "$LOG_FILE"
+
 # Capture system metrics
 echo "System Metrics: $TIMESTAMP" > "$LOG_FILE"
 echo "\nCPU Usage:" >> "$LOG_FILE"
