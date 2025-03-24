@@ -32,14 +32,19 @@ ping_client() {
 
 while true
 do
-	#ClientVM2
-	ping_client "google.com"
+	#ClientVM2 
+	ping_client "192.168.67.195"
 
 	#ClientVM3 
-	ping_client "bing.com"
+	ping_client "192.168.67.131"
 
 	#Every 10 seconds interval
 	echo -e "\n\033[1;33mWaiting for 10 seconds before the next ping cycle...\033[0m"
 	sleep 10 
 done
+
+
+#Replace the ip's 
+
+
 
