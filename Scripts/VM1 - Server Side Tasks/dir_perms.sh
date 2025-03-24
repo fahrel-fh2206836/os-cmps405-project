@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Print green message
+# Green error message
 print_status() {
     echo -e "\e[1;32m[✔] $1\e[0m"
 }
 
-# Print red message
+# Red error message
 print_error() {
     echo -e "\e[1;31m[✘] $1\e[0m"
 }
@@ -43,5 +43,5 @@ getfacl /projects/development/source
 getfacl /projects/development/builds
 getfacl /var/operations/reports
 
-# Successful run of the dir_perms script
-print_status "ACL permissions have been successfully applied!"
+# Completed directory creations
+print_status "Created directory structures and ACL permissions have been successfully applied!"

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# ✅ Green status message
+# Green status message
 print_status() {
     echo -e "\e[1;32m[✔] $1\e[0m"
 }
 
-# ❌ Red error message
+# Red error message
 print_error() {
     echo -e "\e[1;31m[✘] $1\e[0m"
 }
@@ -59,5 +59,5 @@ echo "Adding sudo privileges..."
 sudo usermod -aG sudo dev_lead1 && print_status "Sudo access given to dev_lead1."
 sudo usermod -aG sudo ops_lead1 && print_status "Sudo access given to ops_lead1."
 
-# 🎉 Done
+# Completed User Setup
 echo -e "\n\e[1;34mAll users and groups set up successfully!\e[0m"

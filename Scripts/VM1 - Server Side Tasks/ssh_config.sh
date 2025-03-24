@@ -1,107 +1,126 @@
 #!/bin/bash
-sudo apt update
-sudo apt install openssh-server
-sudo ufw allow ssh
 
-# Create and Setup SSH for dev_lead1
+# Green error message
+print_status() {
+    echo -e "\e[1;32m[✔] $1\e[0m"
+}
+
+# Red error message
+print_error() {
+    echo -e "\e[1;31m[✘] $1\e[0m"
+}
+
+# Check and install openssh-server
+if dpkg -s openssh-server &>/dev/null; then
+    print_status "OpenSSH Server is already installed."
+else
+    sudo apt update && print_status "Package list updated." || print_error "Failed to update package list."
+    sudo apt install -y openssh-server && print_status "OpenSSH Server installed." || print_error "Failed to install OpenSSH Server."
+fi
+
+# Allow SSH through UFW if not yet allowed
+if sudo ufw status | grep -qw "OpenSSH"; then
+    print_status "SSH is already allowed through UFW."
+else
+    sudo ufw allow ssh && print_status "SSH allowed through UFW." || print_error "Failed to allow SSH through UFW."
+fi
+
+# SSH Key-Based Authentication for dev_lead1
 setup_ssh_key_auth() {
-  local USER="dev_lead1"
-  local SSH_DIR="/home/$USER/.ssh"
-  echo "[*] Creating SSH Key Authentication for $USER..."
+    local USER="dev_lead1"
+    local SSH_DIR="/home/$USER/.ssh"
 
-  # Create the user if not exists
-  if ! id "$USER" &>/dev/null; then
-    echo "  [+] Creating user $USER..."
-    sudo useradd -m -s /bin/bash "$USER"
-    sudo passwd -d "$USER"
-  fi
+    echo "[*] Configuring SSH Key Authentication for $USER..."
 
-  # Create SSH directory and set permissions
-  sudo -u "$USER" mkdir -p "$SSH_DIR"
-  sudo chown "$USER:$USER" "$SSH_DIR"
-  sudo chmod 700 "$SSH_DIR"
+    # create user if it doesn't exist
+    if id "$USER" &>/dev/null; then
+        print_status "User $USER already exists."
+    else
+        sudo useradd -m -s /bin/bash "$USER" && print_status "User $USER created." || print_error "Failed to create user $USER."
+        sudo passwd -d "$USER" && print_status "Password removed for $USER."
+    fi
 
-  # Generate SSH key pair if it does not exist
-  if [ ! -f "$SSH_DIR/id_rsa.pub" ]; then
-    echo "  [+] Generating SSH key..."
-    sudo -u "$USER" ssh-keygen -t rsa -b 2048 -f "$SSH_DIR/id_rsa" -N ""
-  fi
+    # create .ssh directory
+    sudo -u "$USER" mkdir -p "$SSH_DIR"
+    sudo chmod 700 "$SSH_DIR"
+    sudo chown "$USER:$USER" "$SSH_DIR"
 
-  # Deploy key
-  echo "  [+] Deploying SSH public key..."
-  sudo cp "$SSH_DIR/id_rsa.pub" "$SSH_DIR/authorized_keys"
-  sudo chown -R "$USER:$USER" "$SSH_DIR"
-  sudo chmod 600 "$SSH_DIR/authorized_keys"
+    # Generate SSH key if it still doesn't exist
+    if [ ! -f "$SSH_DIR/id_rsa.pub" ]; then
+        sudo -u "$USER" ssh-keygen -t rsa -b 2048 -f "$SSH_DIR/id_rsa" -N "" && \
+        print_status "SSH key generated for $USER." || print_error "Failed to generate SSH key."
+    else
+        print_status "SSH key already exists for $USER."
+    fi
 
-  # Lock password and allow only sudo access
-  echo "  [+] Locking password and allowing sudo access..."
-  sudo passwd -l "$USER"
-  echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee "/etc/sudoers.d/$USER" > /dev/null
+    # Deploy key
+    sudo cp "$SSH_DIR/id_rsa.pub" "$SSH_DIR/authorized_keys"
+    sudo chmod 600 "$SSH_DIR/authorized_keys"
+    sudo chown "$USER:$USER" "$SSH_DIR/authorized_keys"
+    print_status "SSH public key deployed for $USER."
+
+    # Lock password login
+    sudo passwd -l "$USER" && print_status "Password login disabled for $USER."
 }
 
-# Disable global password authentication
-disable_password_auth_globally() {
-  echo "[*] Disabling SSH password authentication..."
+# Disable password auth in SSH config
+disable_password_auth() {
+    echo "[*] Disabling password authentication in SSH config..."
 
-  if [ ! -f /etc/ssh/sshd_config ]; then
-    echo "[!] sshd_config not found. Creating a new one..."
-    sudo touch /etc/ssh/sshd_config
-  fi
+    SSHD_CONFIG="/etc/ssh/sshd_config"
 
-  sudo sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config || \
-    echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config
+    if grep -q "^PasswordAuthentication no" "$SSHD_CONFIG"; then
+        print_status "PasswordAuthentication already disabled."
+    else
+        sudo sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD_CONFIG" || \
+        echo "PasswordAuthentication no" | sudo tee -a "$SSHD_CONFIG" > /dev/null
+        print_status "PasswordAuthentication set to no."
+    fi
 
-  sudo systemctl restart sshd 2>/dev/null || echo "[!] SSH service not found or could not be restarted."
+    sudo systemctl restart sshd && print_status "SSH service restarted." || print_error "Failed to restart SSH."
 }
 
-# Monitor all failed SSH login attempts
-monitor_login_attempts() {
-  local USER="dev_lead1"
-  local LOG_FILE="/var/log/dev_lead1_blocked.log"
-  echo "[*] Monitoring failed login attempts for $USER..."
-  sudo grep "sshd.*$USER.*Failed password" /var/log/auth.log | sudo tee "$LOG_FILE" > /dev/null || \
-    echo "[!] Could not write to $LOG_FILE"
+# Auto-detect password-based login attempts
+monitor_failed_logins() {
+    echo "[*] Detecting failed SSH password login attempts for dev_lead1..."
+    local LOG_FILE="/var/log/dev_lead1_blocked.log"
+
+    sudo grep "sshd.*dev_lead1.*Failed password" /var/log/auth.log | sudo tee "$LOG_FILE" > /dev/null && \
+        print_status "Failed login attempts saved to $LOG_FILE." || \
+        print_error "No failed login attempts found or unable to write to log."
 }
 
-# Enable automatic security updates
+# Enable unattended security updates
 enable_auto_updates() {
-  echo "[*] Enabling automatic security updates..."
+    local LOG_PATH="/var/log/security_updates.log"
 
-  # Wait if apt is locked
-  while fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
-    echo "[*] Waiting for apt lock to be released..."
-    sleep 5
-  done
+    echo "[*] Enabling automatic security updates..."
 
-  sudo apt update && sudo apt install -y unattended-upgrades
-  sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+    sudo apt update && sudo apt install -y unattended-upgrades && \
+        print_status "Unattended-upgrades installed." || print_error "Failed to install unattended-upgrades."
 
-  # Create log file for updates
-  local UPDATE_LOG="/var/log/security_updates.log"
-  sudo touch "$UPDATE_LOG"
-  sudo chmod 644 "$UPDATE_LOG"
+    sudo dpkg-reconfigure -f noninteractive unattended-upgrades && \
+        print_status "Unattended-upgrades configured."
 
-  # Cron job to log update results daily at 3 AM
-  echo "[*] Setting up cron job for update logging..."
-  local CRON_JOB='0 3 * * * /usr/bin/unattended-upgrade >> /var/log/security_updates.log 2>&1'
-  (sudo crontab -l 2>/dev/null; echo "$CRON_JOB") | sudo crontab -
+    sudo touch "$LOG_PATH" && sudo chmod 644 "$LOG_PATH" && \
+        print_status "Created log file at $LOG_PATH."
 }
 
-# Set MOTD
-set_motd() {
-  echo "[*] Setting login message..."
-  echo "Welcome to the Ubuntu Administration Lab." | sudo tee /etc/motd > /dev/null
+# Configure the Message of the Day
+motd() {
+    echo "[*] Setting Message of the Day (MOTD)..."
+    echo "Welcome to the Ubuntu Administration Lab." | sudo tee /etc/motd > /dev/null && \
+        print_status "MOTD set successfully."
 }
 
-# Run all functions
+# Main
 main() {
-  setup_ssh_key_auth
-  disable_password_auth_globally
-  monitor_login_attempts
-  enable_auto_updates
-  set_motd
-  echo "All security hardening steps completed!"
+    setup_ssh_key_auth
+    disable_password_auth
+    monitor_failed_logins
+    enable_auto_updates
+    motd
+    echo -e "\n\e[1;34m[✔] All security hardening measures have been completed.\e[0m"
 }
 
-# Run the main function
 main
