@@ -8,30 +8,26 @@
 
 #sudo mysql -u root
 #In MySQL:
-#ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root_pass_123'; Can change 'root_pass_123' to any password
+#ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root_pass_123';
 #FLUSH PRIVILEGES;
-
 #sudo systemctl restartmysql;
 
-## MySQL Firewall Configuration
+# MySQL Firewall Configuration
 # sudo ufw allow 3306/tcp;
 # sudo ufw reload;
 
-## Configure MySQL to Accept Remote Connections
+# Configure MySQL to Accept Remote Connections
 # Modify MySQL configuration to allow remote connections by setting bind-address to 0.0.0.0
 # sudo sed -i 's/^bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf;
 # sudo systemctl restart mysql;
 
-## Enable General Query Log for Monitoring
+# Enable General Query Log for Monitoring
 # sudo touch "/var/log/mysql/general.log";
 # sudo chmod 666 "/var/log/mysql/general.log";
-# sudo touch "/var/log/mysql/mysql_monitor.log";
-# sudo chmod 666 "/var/log/mysql/mysql_monitor.log";
+# sudo touch "/var/log/mysql_audit.log";
+# sudo chmod 666 "/var/log/mysql_audit.log";
 
 # sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
-#[mysqld]
-#general_log = 1
-#general_log_file = /var/log/mysql/general.log
 
 # Restart MySQL to apply logging configuration
 # sudo systemctl restart mysql;
@@ -40,8 +36,8 @@
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
 ##Creation of Users and Databases
-echo "MYSQL - ROOT"
 ##Assigning Privileges
+echo "MYSQL - ROOT"
 sudo mysql -u root -p<<EOF
 
 CREATE USER IF NOT EXISTS 'dev_lead1'@'%' IDENTIFIED BY 'dev123';
@@ -74,11 +70,11 @@ EOF
 tail -f "/var/log/mysql/general.log" | while read line; do
 	#Logins
     if [[ "$line" == *"Connect"* && "$line" == *"dev_lead1"* ]]; then
-        echo "$(date) LOGIN: $line" >> "/var/log/mysql/mysql_monitor.log"
+        echo "$(date) LOGIN: $line" >> "/var/log/mysql_audit.log"
     fi
 
    	#Queries
     if [[ "$line" == *"Query"* ]]; then
-        echo "$(date) QUERY: $line" >> "/var/log/mysql/mysql_monitor.log"
+        echo "$(date) QUERY: $line" >> "/var/log/mysql_audit.log"
     fi
 done	

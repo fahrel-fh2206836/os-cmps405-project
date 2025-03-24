@@ -25,8 +25,8 @@
 ## Enable General Query Log for Monitoring
 # sudo touch "/var/log/mysql/general.log";
 # sudo chmod 666 "/var/log/mysql/general.log";
-# sudo touch "/var/log/mysql/mysql_monitor.log";
-# sudo chmod 666 "/var/log/mysql/mysql_monitor.log";
+# sudo touch "/var/log/mysql_audit.log";
+# sudo chmod 666 "/var/log/mysql_audit.log";
 
 # sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
 #[mysqld]
@@ -48,7 +48,7 @@ CREATE USER IF NOT EXISTS 'ops_lead1'@'%' IDENTIFIED BY 'ops123';
 
 CREATE DATABASE IF NOT EXISTS operations_db;
 
-GRANT ALL PRIVILEGES ON operations.* TO 'ops_lead1'@'%';
+GRANT ALL PRIVILEGES ON operations_db.* TO 'ops_lead1'@'%';
 
 FLUSH PRIVILEGES;
 EOF
@@ -74,11 +74,11 @@ EOF
 tail -f "/var/log/mysql/general.log" | while read line; do
 	#Logins
     if [[ "$line" == *"Connect"* && "$line" == *"ops_lead1"* ]]; then
-        echo "$(date) LOGIN: $line" >> "/var/log/mysql/mysql_monitor.log"
+        echo "$(date) LOGIN: $line" >> "/var/log/mysql_audit.log"
     fi
 
    	#Queries
     if [[ "$line" == *"Query"* ]]; then
-        echo "$(date) QUERY: $line" >> "/var/log/mysql/mysql_monitor.log"
+        echo "$(date) QUERY: $line" >> "/var/log/mysql_audit.log"
     fi
 done	
