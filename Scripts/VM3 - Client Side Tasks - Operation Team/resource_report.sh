@@ -2,8 +2,8 @@
 
 report="./resource_report_$(date "+%Y-%m-%d_%H-%M-%S").txt"
 reportDir="/var/operations/reports"
-userVM1="server"                      
-ipVM1="192.168.67.131"                 
+userVM1="ops_lead1"                      
+ipVM1="192.168.10.128"                 
 remotePath="$userVM1@$ipVM1:$reportDir"
 
 # 1. Create Report
